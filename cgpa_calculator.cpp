@@ -3,100 +3,105 @@
 #include <string>
 using namespace std;
 
+// Subject class represents a single subject with its name, grade, and credit
 class Subject {
-public:
+private:
     string name;
     float grade;
     int credit;
 
-    Subject(string n, float g, int c) {
-        name = n;
-        grade = g;
-        credit = c;
-    }
+public:
+    Subject(string n, float g, int c) : name(n), grade(g), credit(c) {}
+
+    string getName() const { return name; }
+    float getGrade() const { return grade; }
+    int getCredit() const { return credit; }
 };
 
+// Abstract base class
 class CGPACalculator {
-private:
+protected:
     vector<Subject> subjects;
 
 public:
-    void addSubject(string name, float grade, int credit) {
+    void addSubject(const string& name, float grade, int credit) {
         subjects.push_back(Subject(name, grade, credit));
     }
 
-    float calculateCGPA() {
-        float totalGradePoints = 0;
+    float calculateCGPA() const {
+        float totalPoints = 0;
         int totalCredits = 0;
 
-        for (auto& subject : subjects) {
-            totalGradePoints += subject.grade * subject.credit;
-            totalCredits += subject.credit;
+        for (const auto& sub : subjects) {
+            totalPoints += sub.getGrade() * sub.getCredit();
+            totalCredits += sub.getCredit();
         }
 
-        if (totalCredits == 0) return 0;
-        return totalGradePoints / totalCredits;
+        return (totalCredits == 0) ? 0 : totalPoints / totalCredits;
     }
 
-    void printSubjects() {
-        cout << "\nSubjects entered:\n";
-        for (auto& subject : subjects) {
-            cout << "- " << subject.name << ": Grade = " << subject.grade << ", Credit = " << subject.credit << endl;
+    virtual void displayResult() const = 0; // Polymorphism
+};
+
+// Inheritance: EngineeringCalculator inherits CGPACalculator
+class EngineeringCalculator : public CGPACalculator {
+public:
+    void displayResult() const override {
+        cout << "\nSubjects Entered:\n";
+        for (const auto& sub : subjects) {
+            cout << "- " << sub.getName()
+                 << ": Grade = " << sub.getGrade()
+                 << ", Credit = " << sub.getCredit() << endl;
         }
+
+        float cgpa = calculateCGPA();
+        cout << "\nFinal CGPA: " << cgpa << endl;
     }
 };
 
-bool isValidGrade(float grade) {
-    return grade >= 0.0 && grade <= 10.0;
+// Input validation helpers
+bool isValidGrade(float g) {
+    return g >= 0.0 && g <= 10.0;
 }
 
-bool isValidCredit(int credit) {
-    return credit > 0 && credit <= 10;
+bool isValidCredit(int c) {
+    return c > 0 && c <= 10;
 }
 
+// MAIN
 int main() {
-    CGPACalculator calc;
-    int numSubjects;
-
+    CGPACalculator* calc = new EngineeringCalculator();  // Polymorphism
+    int n;
     cout << "Enter number of subjects: ";
-    cin >> numSubjects;
-    cin.ignore(); // Clear newline after number input
+    cin >> n;
+    cin.ignore();
 
-    for (int i = 0; i < numSubjects; ++i) {
+    for (int i = 0; i < n; ++i) {
         string name;
         float grade;
         int credit;
 
-        cout << "\nEnter name of subject " << i + 1 << ": ";
+        cout << "\nSubject " << i + 1 << " name: ";
         getline(cin, name);
 
-        // Grade input with validation
         do {
-            cout << "Enter grade for " << name << " (0.0 - 10.0): ";
+            cout << "Grade (0.0 - 10.0): ";
             cin >> grade;
-            if (!isValidGrade(grade)) {
-                cout << "Invalid grade. Please enter a value between 0 and 10.\n";
-            }
+            if (!isValidGrade(grade)) cout << "Invalid grade.\n";
         } while (!isValidGrade(grade));
 
-        // Credit input with validation
         do {
-            cout << "Enter credit for " << name << " (1 - 10): ";
+            cout << "Credit (1 - 10): ";
             cin >> credit;
-            if (!isValidCredit(credit)) {
-                cout << "Invalid credit. Please enter a positive value up to 10.\n";
-            }
+            if (!isValidCredit(credit)) cout << "Invalid credit.\n";
         } while (!isValidCredit(credit));
 
-        cin.ignore(); // Clear newline for next getline
-
-        calc.addSubject(name, grade, credit);
+        cin.ignore(); // clear newline
+        calc->addSubject(name, grade, credit);
     }
 
-    calc.printSubjects();
+    calc->displayResult();
 
-    float cgpa = calc.calculateCGPA();
-    cout << "\nYour CGPA is: " << cgpa << endl;
-
+    delete calc;
     return 0;
 }
